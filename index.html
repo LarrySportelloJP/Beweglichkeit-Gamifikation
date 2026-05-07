@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LK Sport: Beweglichkeit Masterclass</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin: auto;
+            height: 350px;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(0.95); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop { animation: pop 0.4s ease-out forwards; }
+
+        .hidden-content { display: none !important; }
+        
+        .xp-popup {
+            position: fixed;
+            color: #10b981;
+            font-weight: bold;
+            font-size: 1.5rem;
+            pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+            z-index: 9999;
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-40px); }
+        }
+
+        #ai-chat-widget {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: none; 
+        }
+
+        .chat-window {
+            width: 350px;
+            height: 450px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            z-index: 1001;
+        }
+
+        /* API Key Overlay */
+        #api-key-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.95);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col p-4 md:p-8">
+
+    <div id="api-key-overlay">
+        <div class="glass-panel p-8 max-w-md w-full space-y-4 text-center">
+            <h2 class="text-2xl font-bold text-emerald-400">🔐 KI-Sicherheits-Check</h2>
+            <p class="text-sm text-slate-400">Um die Gemini-KI auf GitHub Pages nutzen zu können, gib bitte deinen API-Key ein. Er wird nur lokal in deinem Browser gespeichert.</p>
+            <input type="password" id="api-key-input" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-center outline-none focus:border-emerald-500" placeholder="AI_Key_hier_einfügen...">
+            <div class="flex flex-col gap-2">
+                <button onclick="saveApiKey()" class="bg-emerald-600 hover:bg-emerald-500 w-full py-2 rounded font-bold transition-all">Anwendung starten</button>
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-xs text-blue-400 underline italic">Wo bekomme ich einen kostenlosen Key?</a>
+            </div>
+        </div>
+    </div>
+
+    <header class="glass-panel p-4 mb-8 sticky top-4 z-40 flex justify-between items-center shadow-lg">
+        <div>
+            <h1 class="text-xl md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 uppercase">
+                🏋️ LK Sport: Beweglichkeit AI
+            </h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="text-right">
+                <span id="level-display" class="bg-blue-600 text-white px-3 py-1 rounded-full font-bold text-xs">Lvl 1</span>
+                <div class="text-lg font-black text-emerald-400" id="xp-display">0 XP</div>
+            </div>
+            <div class="w-24 bg-slate-700 h-2 rounded-full overflow-hidden hidden md:block">
+                <div id="xp-bar" class="bg-emerald-500 h-full w-0 transition-all duration-500"></div>
+            </div>
+            <button onclick="resetApiKey()" class="text-[10px] text-slate-500 hover:text-white underline">Key reset</button>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto w-full space-y-12 pb-24">
+        <section id="phase-1" class="space-y-6">
+            <div class="border-l-4 border-blue-500 pl-4">
+                <h2 class="text-2xl font-bold">📂 Phase 1: Theorie-Briefing</h2>
+                <p class="text-slate-400 text-sm">Entschlüssele die Inhalte aus `10_Beweglichkeit_6.pptx`.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-panel p-6 flex flex-col items-center text-center">
+                    <div class="text-4xl mb-4">📏</div>
+                    <h3 class="font-bold mb-2">Definition</h3>
+                    <button class="bg-blue-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-500 transition-colors" onclick="revealCard('def', 50, this)">Revealen (50 XP)</button>
+                    <div id="content-def" class="hidden-content mt-4 text-sm text-slate-300 text-left bg-slate-900/50 p-3 rounded">
+                        „Beweglichkeit ist die Fähigkeit, Bewegungen mit großer Schwingungsweite ausführen zu können.“
+                    </div>
+                </div>
+                <div class="glass-panel p-6 flex flex-col items-center text-center">
+                    <div class="text-4xl mb-4">⚡</div>
+                    <h3 class="font-bold mb-2">Sportliche Leistung</h3>
+                    <button class="bg-blue-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-500 transition-colors" onclick="revealCard('leistung', 100, this)">Revealen (100 XP)</button>
+                    <div id="content-leistung" class="hidden-content mt-4 text-sm text-slate-300 text-left bg-slate-900/50 p-3 rounded">
+                        Verbesserung des Beschleunigungsweges & Dehnfähigkeit der Agonisten spart Energie bei Aktionen.
+                    </div>
+                </div>
+                <div class="glass-panel p-6 flex flex-col items-center text-center">
+                    <div class="text-4xl mb-4">❤️</div>
+                    <h3 class="font-bold mb-2">Gesundheit</h3>
+                    <button class="bg-blue-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-500 transition-colors" onclick="revealCard('gesund', 50, this)">Revealen (50 XP)</button>
+                    <div id="content-gesund" class="hidden-content mt-4 text-sm text-slate-300 text-left bg-slate-900/50 p-3 rounded">
+                        Prävention von Haltungsschäden & Erhalt der Elastizität von Binde- und Stützgewebe.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="phase-2" class="space-y-6 opacity-50 grayscale pointer-events-none transition-all duration-700">
+            <div class="border-l-4 border-emerald-500 pl-4">
+                <h2 class="text-2xl font-bold">🔬 Phase 2: Methoden-Labor</h2>
+                <p class="text-slate-400 text-sm">Welche Dehnmethode ist laut `10_Beweglichkeit_6.pptx` am effektivsten?</p>
+            </div>
+            <div class="glass-panel p-6">
+                <div id="prediction-ui" class="text-center space-y-4">
+                    <h3 class="text-lg font-bold">Stelle deine Hypothese auf:</h3>
+                    <div class="flex flex-wrap justify-center gap-2">
+                        <button class="bg-slate-700 px-4 py-2 rounded hover:bg-slate-600 transition-colors" onclick="checkPrediction('Statisch', this)">Statisch</button>
+                        <button class="bg-slate-700 px-4 py-2 rounded hover:bg-slate-600 transition-colors" onclick="checkPrediction('Dynamisch', this)">Dynamisch</button>
+                        <button class="bg-slate-700 px-4 py-2 rounded hover:bg-slate-600 transition-colors" onclick="checkPrediction('Kombi', this)">CR-AC Kombination</button>
+                    </div>
+                </div>
+                <div id="chart-section" class="hidden-content animate-pop">
+                    <div class="chart-container"><canvas id="methodsChart"></canvas></div>
+                    <div class="text-center mt-4 p-4 bg-emerald-900/20 border border-emerald-500/30 rounded-lg">
+                        <p class="text-emerald-400 font-bold">Erkenntnis: Die CR-AC Kombi (Position 4) ist unschlagbar!</p>
+                        <p class="text-xs text-slate-400 mt-1">Statisches Dehnen (Position 1) hat die geringste Wirkung.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="phase-3" class="space-y-6 opacity-50 grayscale pointer-events-none transition-all duration-700">
+            <div class="border-l-4 border-orange-500 pl-4">
+                <h2 class="text-2xl font-bold">⚔️ Phase 3: Praxis-Arena</h2>
+                <p class="text-slate-400 text-sm">Beantworte 5 Fragen korrekt, um Level 4 freizuschalten.</p>
+            </div>
+            <div class="glass-panel p-6 min-h-[250px] flex flex-col justify-center items-center">
+                <div id="quiz-container" class="w-full max-w-2xl">
+                    <div class="text-center">
+                        <button class="bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all" onclick="startQuiz()">
+                            Praxistest Starten (5 Fragen)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="phase-4" class="space-y-6 opacity-50 grayscale pointer-events-none transition-all duration-700">
+            <div class="border-l-4 border-blue-400 pl-4">
+                <h2 class="text-2xl font-bold">🤖 Phase 4: AI Master Challenge</h2>
+                <p class="text-slate-400 text-sm">Nutze die Gemini AI für ein individuelles Training-Szenario.</p>
+            </div>
+            <div class="glass-panel p-6 space-y-4">
+                <div class="text-center">
+                    <button id="gen-scenario-btn" class="bg-blue-600 px-6 py-2 rounded font-bold hover:bg-blue-500 transition-colors" onclick="generateAIScenario()">Szenario generieren (KI)</button>
+                </div>
+                <div id="scenario-display" class="hidden-content p-4 bg-slate-800 rounded-lg italic text-slate-300 border-l-2 border-blue-500"></div>
+                <div id="response-area" class="hidden-content space-y-4">
+                    <textarea id="user-recommendation" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm h-32 focus:border-blue-500 outline-none" placeholder="Deine Trainingsempfehlung..."></textarea>
+                    <button id="submit-recommendation" class="w-full bg-emerald-600 py-2 rounded font-bold" onclick="evaluateRecommendation()">Empfehlung prüfen lassen</button>
+                </div>
+                <div id="ai-evaluation" class="hidden-content p-4 rounded-lg border border-blue-500/30 bg-blue-900/20">
+                    <h4 class="font-bold text-blue-400 mb-2">KI-Feedback:</h4>
+                    <p id="evaluation-text" class="text-sm leading-relaxed"></p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="ai-chat-widget">
+        <button id="chat-toggle" class="bg-blue-600 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform relative z-[1000]" onclick="toggleChat()">
+            💬
+        </button>
+        <div id="chat-window" class="chat-window glass-panel absolute bottom-16 right-0 hidden-content">
+            <div class="p-3 border-b border-white/10 bg-blue-600/20 flex justify-between items-center">
+                <span class="font-bold text-sm text-white">KI-Experte</span>
+                <button onclick="toggleChat()" class="text-slate-400 hover:text-white p-2 hover:bg-white/10 rounded transition-all">✕</button>
+            </div>
+            <div id="chat-messages" class="flex-1 p-4 overflow-y-auto text-xs space-y-3">
+                <div class="bg-slate-800 p-2 rounded-lg">Frag mich zu `10_Beweglichkeit_6.pptx`!</div>
+            </div>
+            <div class="p-3 border-t border-white/10 flex gap-2">
+                <input type="text" id="chat-input" class="flex-1 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs outline-none focus:border-blue-500" placeholder="Frage..." onkeypress="if(event.key === 'Enter') sendChat()">
+                <button onclick="sendChat()" class="bg-blue-600 px-3 py-1 rounded text-xs font-bold">Senden</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let state = {
+            xp: 0,
+            level: 1,
+            cardsRevealed: 0,
+            quizIndex: 0,
+            currentScenario: "",
+            apiKey: ""
+        };
+
+        const LEVEL_THRESHOLDS = { 2: 200, 3: 350, 4: 550 };
+
+        window.onload = () => {
+            const savedKey = localStorage.getItem('gemini_api_key');
+            if (savedKey) {
+                state.apiKey = savedKey;
+                document.getElementById('api-key-overlay').style.display = 'none';
+            }
+        };
+
+        function saveApiKey() {
+            const key = document.getElementById('api-key-input').value.trim();
+            if (key.length > 20) {
+                state.apiKey = key;
+                localStorage.setItem('gemini_api_key', key);
+                document.getElementById('api-key-overlay').style.display = 'none';
+            } else {
+                alert("Bitte gib einen gültigen API-Key ein.");
+            }
+        }
+
+        function resetApiKey() {
+            localStorage.removeItem('gemini_api_key');
+            location.reload();
+        }
+
+        function addXP(amount, element) {
+            state.xp += amount;
+            document.getElementById('xp-display').innerText = `${state.xp} XP`;
+            if (element) showXPPopup(amount, element);
+            checkLevelUp();
+        }
+
+        function showXPPopup(amount, element) {
+            const rect = element.getBoundingClientRect();
+            const popup = document.createElement('div');
+            popup.className = 'xp-popup';
+            popup.innerText = `+${amount} XP`;
+            popup.style.left = `${rect.left}px`;
+            popup.style.top = `${rect.top + window.scrollY - 20}px`;
+            document.body.appendChild(popup);
+            setTimeout(() => popup.remove(), 1000);
+        }
+
+        function checkLevelUp() {
+            let newLvl = 1;
+            for (let l in LEVEL_THRESHOLDS) {
+                if (state.xp >= LEVEL_THRESHOLDS[l]) newLvl = parseInt(l);
+            }
+            
+            if (newLvl > state.level) {
+                state.level = newLvl;
+                document.getElementById('level-display').innerText = `Lvl ${state.level}`;
+                if (state.level >= 2) {
+                    unlockPhase('phase-2');
+                    document.getElementById('ai-chat-widget').style.display = 'block';
+                }
+                if (state.level >= 3) unlockPhase('phase-3');
+                if (state.level >= 4) unlockPhase('phase-4');
+            }
+            const progress = Math.min(100, (state.xp / 650) * 100);
+            document.getElementById('xp-bar').style.width = `${progress}%`;
+        }
+
+        function unlockPhase(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.remove('opacity-50', 'grayscale', 'pointer-events-none');
+                el.classList.add('animate-pop');
+            }
+        }
+
+        function revealCard(id, xp, btn) {
+            const content = document.getElementById(`content-${id}`);
+            if (content) {
+                content.classList.remove('hidden-content');
+                btn.classList.add('hidden-content');
+                addXP(xp, btn);
+            }
+        }
+
+        function checkPrediction(c, btn) {
+            document.getElementById('prediction-ui').classList.add('hidden-content');
+            document.getElementById('chart-section').classList.remove('hidden-content');
+            addXP(150, btn); 
+            renderChart();
+        }
+
+        function renderChart() {
+            const ctx = document.getElementById('methodsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Statisch (Pos 1)', 'CR-Stretching (Pos 2)', 'Dynamisch/AC (Pos 3)', 'CR-AC Kombi (Pos 4)'],
+                    datasets: [{
+                        label: 'Effektivität laut PPTX',
+                        data: [25, 45, 75, 100],
+                        backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981'],
+                        borderRadius: 8
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, max: 110, ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#f8fafc' } } }
+                }
+            });
+        }
+
+        const quizData = [
+            {
+                q: "Wann sollte laut `10_Beweglichkeit_6.pptx` statisch gedehnt werden?",
+                a: "Unmittelbar vor Schnellkrafttraining",
+                b: "Zum 'Erhöhten Erfühlen' der Muskulatur",
+                correct: "b",
+                expl: "Korrekt! Statisches Dehnen vor Krafttraining erhöht das Muskelkater-Risiko."
+            },
+            {
+                q: "Was bewirkt Aufwärmen für die Beweglichkeit?",
+                a: "Es senkt den Muskeltonus und steigert die Dehnfähigkeit",
+                b: "Es hat keinen Einfluss, Dehnen ist wichtiger",
+                correct: "a",
+                expl: "Richtig! Aufwärmen schafft optimale Voraussetzungen für die Leistungsfähigkeit."
+            },
+            {
+                q: "Welche Dehnmethode unterdrückt den Dehnungsreflex?",
+                a: "Dynamisches Dehnen",
+                b: "AC-Stretching (aktiv-statisch)",
+                correct: "b",
+                expl: "Stimmt! Das AC-Stretching nutzt die Hemmung durch das Nervensystem."
+            },
+            {
+                q: "Was gehört laut PPTX zu den 'konstitutionellen Faktoren'?",
+                a: "Muskeltonus und Sehnenelastizität",
+                b: "Gelenktyp und Knochenfortsätze",
+                correct: "b",
+                expl: "Korrekt. Knochenbau und Gelenkform sind vorgegeben."
+            },
+            {
+                q: "Wie oft sollte man pro Woche dehnen?",
+                a: "Mindestens 3x wöchentlich",
+                b: "1x wöchentlich reicht aus",
+                correct: "a",
+                expl: "Richtig! Kontinuität (3x pro Woche) ist der Schlüssel laut Trainingsempfehlung."
+            }
+        ];
+
+        function startQuiz() {
+            state.quizIndex = 0;
+            renderQuiz();
+        }
+
+        function renderQuiz() {
+            const q = quizData[state.quizIndex];
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = `
+                <div class="animate-pop space-y-4 w-full">
+                    <div class="text-xs font-bold text-orange-400 uppercase text-center">Frage ${state.quizIndex + 1} von 5</div>
+                    <p class="font-bold text-center text-lg">${q.q}</p>
+                    <div class="flex flex-col gap-2">
+                        <button onclick="answerQuiz('a')" class="bg-slate-700 p-4 rounded hover:bg-blue-600 transition-colors text-sm text-left">A: ${q.a}</button>
+                        <button onclick="answerQuiz('b')" class="bg-slate-700 p-4 rounded hover:bg-blue-600 transition-colors text-sm text-left">B: ${q.b}</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function answerQuiz(choice) {
+            const q = quizData[state.quizIndex];
+            const container = document.getElementById('quiz-container');
+            let isCorrect = (choice === q.correct);
+            
+            container.innerHTML = `
+                <div class="text-center space-y-4 animate-pop">
+                    <p class="text-xl font-bold">${isCorrect ? '✅ Richtig!' : '❌ Nicht ganz.'}</p>
+                    <p class="text-slate-300 text-sm">${q.expl}</p>
+                    <button onclick="nextQuiz()" class="bg-emerald-600 px-6 py-2 rounded font-bold mt-4">Weiter</button>
+                </div>
+            `;
+            if(isCorrect) addXP(40, container); 
+        }
+
+        function nextQuiz() {
+            state.quizIndex++;
+            if(state.quizIndex < quizData.length) {
+                renderQuiz();
+            } else {
+                document.getElementById('quiz-container').innerHTML = `
+                    <div class="text-center">
+                        <p class="text-emerald-400 font-bold text-xl">Arena abgeschlossen!</p>
+                        <p class="text-sm">Du hast genug Wissen für die Master Challenge gesammelt.</p>
+                    </div>
+                `;
+                checkLevelUp();
+            }
+        }
+
+        async function callGemini(prompt, system) {
+            if (!state.apiKey) return "API-Key fehlt.";
+            
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${state.apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: { parts: [{ text: system }] }
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                return result.candidates?.[0]?.content?.parts?.[0]?.text || "Fehler in der Kommunikation.";
+            } catch (e) {
+                return "KI momentan nicht erreichbar.";
+            }
+        }
+
+        async function sendChat() {
+            const input = document.getElementById('chat-input');
+            const container = document.getElementById('chat-messages');
+            if (!input.value.trim()) return;
+
+            const userMsg = input.value;
+            input.value = "";
+            container.innerHTML += `<div class="bg-blue-600/30 p-2 rounded-lg text-right mb-2">Du: ${userMsg}</div>`;
+            container.scrollTop = container.scrollHeight;
+
+            const system = `Du bist Experte für Sportwissenschaft. Deine Quelle ist '10_Beweglichkeit_6.pptx'. Antworte kurz und präzise auf Deutsch.`;
+            const response = await callGemini(userMsg, system);
+            container.innerHTML += `<div class="bg-slate-800 p-2 rounded-lg mb-2">KI: ${response}</div>`;
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function generateAIScenario() {
+            const btn = document.getElementById('gen-scenario-btn');
+            btn.disabled = true;
+            btn.innerText = "Generiere...";
+            const system = `Erstelle ein kurzes Problem-Szenario für einen Sportler (2 Sätze). Beziehe dich auf Beweglichkeit aus '10_Beweglichkeit_6.pptx'.`;
+            state.currentScenario = await callGemini("Erstelle ein Szenario.", system);
+            document.getElementById('scenario-display').classList.remove('hidden-content');
+            document.getElementById('scenario-display').innerText = state.currentScenario;
+            document.getElementById('response-area').classList.remove('hidden-content');
+            btn.disabled = false;
+            btn.innerText = "Neues Szenario";
+        }
+
+        async function evaluateRecommendation() {
+            const userText = document.getElementById('user-recommendation').value;
+            if (userText.length < 10) return;
+            const evalBtn = document.getElementById('submit-recommendation');
+            evalBtn.disabled = true;
+            const system = `Bewerte die Antwort basierend auf '10_Beweglichkeit_6.pptx'. Gib kurzes Feedback und einen Score am Ende im Format: Feedback | Score (0-150).`;
+            const result = await callGemini(`Szenario: ${state.currentScenario}\nAntwort: ${userText}`, system);
+            
+            let feedback = result;
+            let score = 50;
+            
+            if (result.includes('|')) {
+                const parts = result.split('|');
+                feedback = parts[0].trim();
+                score = parseInt(parts[1]?.trim()) || 50;
+            }
+
+            document.getElementById('ai-evaluation').classList.remove('hidden-content');
+            document.getElementById('evaluation-text').innerText = feedback;
+            addXP(score, evalBtn);
+            evalBtn.disabled = false;
+        }
+
+        function toggleChat() {
+            document.getElementById('chat-window').classList.toggle('hidden-content');
+        }
+    </script>
+</body>
+</html>
